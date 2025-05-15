@@ -15,15 +15,24 @@ def index():
             database="railway",
             charset="utf8mb4"
         )
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM wrist_log ORDER BY created_at DESC LIMIT 10")
-        logs = cursor.fetchall()
+cursor = conn.cursor()
+        cursor.execute("SELECT id, message, created_at FROM wrist_log ORDER BY created_at DESC LIMIT 10")
+        rows = cursor.fetchall()
+
+        # 컬럼별로 파싱된 리스트 만들기
+        logs = []
+        for row in rows:
+            log = {
+                "id": row[0],
+                "message": row[1],
+                "created_at": row[2].strftime("%Y-%m-%d %H:%M:%S"),
+                "status": "⚠️ 손목 꺾임 감지" if "1" in row[1] else "✅ 정상"
+            }
+            logs.append(log)
+
         cursor.close()
         conn.close()
+
         return render_template("index.html", logs=logs)
     except Exception as e:
         return f"❌ DB 연결 실패: {e}"
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
