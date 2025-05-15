@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Hello Railway</title>
-</head>
+<head><title>로그 보기</title></head>
 <body>
-    <h1>🎉 Railway에 Flask 앱 배포 성공!</h1>
+    <h1>📋 Wrist Log</h1>
+    <ul>
+        {% for log in logs %}
+        <li>{{ log }}</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
