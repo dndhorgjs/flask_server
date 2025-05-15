@@ -1,12 +1,31 @@
 <!DOCTYPE html>
 <html>
-<head><title>로그 보기</title></head>
+<head>
+    <title>Wrist Log</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { padding: 8px 12px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #f5f5f5; }
+    </style>
+</head>
 <body>
     <h1>📋 Wrist Log</h1>
-    <ul>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>메시지</th>
+            <th>기록 시간</th>
+            <th>상태</th>
+        </tr>
         {% for log in logs %}
-        <li>{{ log }}</li>
+        <tr>
+            <td>{{ log.id }}</td>
+            <td>{{ log.message }}</td>
+            <td>{{ log.created_at }}</td>
+            <td>{{ log.status }}</td>
+        </tr>
         {% endfor %}
-    </ul>
+    </table>
 </body>
 </html>
