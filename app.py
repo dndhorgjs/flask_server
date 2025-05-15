@@ -36,3 +36,7 @@ def index():
         return render_template("index.html", logs=logs)
     except Exception as e:
         return f"❌ DB 연결 실패: {e}"
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))  # Railway가 사용하는 포트
+    app.run(host="0.0.0.0", port=port)
