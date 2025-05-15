@@ -15,7 +15,7 @@ def index():
             database="railway",
             charset="utf8mb4"
         )
-cursor = conn.cursor()
+        cursor = conn.cursor()
         cursor.execute("SELECT id, message, created_at FROM wrist_log ORDER BY created_at DESC LIMIT 10")
         rows = cursor.fetchall()
 
