@@ -17,7 +17,7 @@ def index():
         )
         cursor = conn.cursor()
 
-        # 1. 최근 로그 10개 조회
+        # ✅ 1. 최근 로그 10개 조회
         cursor.execute("""
             SELECT id, message, created_at 
             FROM wrist_log 
@@ -36,7 +36,7 @@ def index():
             }
             logs.append(log)
 
-        # 2. 최근 30일간 '1' 포함된 손목 꺾임 - 날짜+시간대별 집계
+        # ✅ 2. 시간대별 꺾임 횟수 (최근 30일, 날짜+시간 기준)
         cursor.execute("""
             SELECT DATE_FORMAT(created_at, '%m/%d %H시') AS datetime_label, COUNT(*) 
             FROM wrist_log 
@@ -49,10 +49,40 @@ def index():
         labels = [label for label, _ in time_data]
         data = [count for _, count in time_data]
 
+        # ✅ 3. 꺾임 통계 요약 계산
+        # 총 꺾임 횟수
+        cursor.execute("""
+            SELECT COUNT(*) 
+            FROM wrist_log 
+            WHERE message LIKE '%1%' 
+              AND created_at >= NOW() - INTERVAL 30 DAY
+        """)
+        total_bends = cursor.fetchone()[0]
+
+        # 꺾임 발생한 날짜 수
+        cursor.execute("""
+            SELECT COUNT(DISTINCT DATE(created_at)) 
+            FROM wrist_log 
+            WHERE message LIKE '%1%' 
+              AND created_at >= NOW() - INTERVAL 30 DAY
+        """)
+        bend_days = cursor.fetchone()[0]
+
+        # 하루 평균
+        avg_bends = round(total_bends / bend_days, 2) if bend_days > 0 else 0
+
         cursor.close()
         conn.close()
 
-        return render_template("index.html", logs=logs, labels=labels, data=data)
+        return render_template(
+            "index.html",
+            logs=logs,
+            labels=labels,
+            data=data,
+            total_bends=total_bends,
+            bend_days=bend_days,
+            avg_bends=avg_bends
+        )
 
     except Exception as e:
         return f"❌ DB 연결 실패: {e}"
