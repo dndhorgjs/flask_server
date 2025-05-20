@@ -17,8 +17,13 @@ def index():
         )
         cursor = conn.cursor()
 
-        # 최근 로그 불러오기
-        cursor.execute("SELECT id, message, created_at FROM wrist_log ORDER BY created_at DESC LIMIT 10")
+        # 1. 최근 로그 10개 조회
+        cursor.execute("""
+            SELECT id, message, created_at 
+            FROM wrist_log 
+            ORDER BY created_at DESC 
+            LIMIT 10
+        """)
         rows = cursor.fetchall()
 
         logs = []
@@ -31,8 +36,15 @@ def index():
             }
             logs.append(log)
 
-        # 시간대별 꺾임 횟수 통계
-        cursor.execute("SELECT HOUR(created_at), COUNT(*) FROM wrist_log GROUP BY HOUR(created_at)")
+        # 2. 최근 30일간 손목 꺾임 ('1' 포함된 메시지) 시간대별 집계
+        cursor.execute("""
+            SELECT HOUR(created_at) AS hour, COUNT(*) 
+            FROM wrist_log 
+            WHERE message LIKE '%1%' 
+              AND created_at >= NOW() - INTERVAL 30 DAY
+            GROUP BY hour
+            ORDER BY hour
+        """)
         time_data = cursor.fetchall()
         labels = [f"{hour}시" for hour, _ in time_data]
         data = [count for _, count in time_data]
