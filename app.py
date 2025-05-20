@@ -9,17 +9,18 @@ def index():
     try:
         conn = pymysql.connect(
             host="metro.proxy.rlwy.net",
-            port=39083,  # 포트는 너 DB에 맞게
+            port=39083,
             user="root",
             password="CXJqQqOlYTACMQZPdSaNyvUeLtnfHVvH",
             database="railway",
             charset="utf8mb4"
         )
         cursor = conn.cursor()
+
+        # 최근 로그 불러오기
         cursor.execute("SELECT id, message, created_at FROM wrist_log ORDER BY created_at DESC LIMIT 10")
         rows = cursor.fetchall()
 
-        # 컬럼별로 파싱된 리스트 만들기
         logs = []
         for row in rows:
             log = {
@@ -30,13 +31,20 @@ def index():
             }
             logs.append(log)
 
+        # 시간대별 꺾임 횟수 통계
+        cursor.execute("SELECT HOUR(created_at), COUNT(*) FROM wrist_log GROUP BY HOUR(created_at)")
+        time_data = cursor.fetchall()
+        labels = [f"{hour}시" for hour, _ in time_data]
+        data = [count for _, count in time_data]
+
         cursor.close()
         conn.close()
 
-        return render_template("index.html", logs=logs)
+        return render_template("index.html", logs=logs, labels=labels, data=data)
+
     except Exception as e:
         return f"❌ DB 연결 실패: {e}"
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Railway가 사용하는 포트
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
