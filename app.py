@@ -36,17 +36,17 @@ def index():
             }
             logs.append(log)
 
-        # 2. 최근 30일간 손목 꺾임 ('1' 포함된 메시지) 시간대별 집계
+        # 2. 최근 30일간 '1' 포함된 손목 꺾임 - 날짜+시간대별 집계
         cursor.execute("""
-            SELECT HOUR(created_at) AS hour, COUNT(*) 
+            SELECT DATE_FORMAT(created_at, '%m/%d %H시') AS datetime_label, COUNT(*) 
             FROM wrist_log 
             WHERE message LIKE '%1%' 
               AND created_at >= NOW() - INTERVAL 30 DAY
-            GROUP BY hour
-            ORDER BY hour
+            GROUP BY datetime_label
+            ORDER BY MIN(created_at)
         """)
         time_data = cursor.fetchall()
-        labels = [f"{hour}시" for hour, _ in time_data]
+        labels = [label for label, _ in time_data]
         data = [count for _, count in time_data]
 
         cursor.close()
