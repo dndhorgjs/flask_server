@@ -1,9 +1,10 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 import pymysql
 import os
 
 app = Flask(__name__)
 
+# 메인 페이지
 @app.route("/")
 def index():
     try:
@@ -17,7 +18,7 @@ def index():
         )
         cursor = conn.cursor()
 
-        # ✅ 1. 최근 로그 10개 조회
+        # 최근 로그 10개 조회
         cursor.execute("""
             SELECT id, message, created_at 
             FROM wrist_log 
@@ -25,18 +26,14 @@ def index():
             LIMIT 10
         """)
         rows = cursor.fetchall()
+        logs = [{
+            "id": row[0],
+            "message": row[1],
+            "created_at": row[2].strftime("%Y-%m-%d %H:%M:%S"),
+            "status": "⚠️ 손목 꺾임 감지" if "1" in row[1] else "✅ 정상"
+        } for row in rows]
 
-        logs = []
-        for row in rows:
-            log = {
-                "id": row[0],
-                "message": row[1],
-                "created_at": row[2].strftime("%Y-%m-%d %H:%M:%S"),
-                "status": "⚠️ 손목 꺾임 감지" if "1" in row[1] else "✅ 정상"
-            }
-            logs.append(log)
-
-        # ✅ 2. 시간대별 꺾임 횟수 (최근 30일, 날짜+시간 기준)
+        # 시간대별 꺾임 분석 (최근 30일)
         cursor.execute("""
             SELECT DATE_FORMAT(created_at, '%m/%d %H시') AS datetime_label, COUNT(*) 
             FROM wrist_log 
@@ -49,8 +46,7 @@ def index():
         labels = [label for label, _ in time_data]
         data = [count for _, count in time_data]
 
-        # ✅ 3. 꺾임 통계 요약 계산
-        # 총 꺾임 횟수
+        # 꺾임 총합
         cursor.execute("""
             SELECT COUNT(*) 
             FROM wrist_log 
@@ -68,7 +64,7 @@ def index():
         """)
         bend_days = cursor.fetchone()[0]
 
-        # 하루 평균
+        # 평균 꺾임
         avg_bends = round(total_bends / bend_days, 2) if bend_days > 0 else 0
 
         cursor.close()
@@ -86,6 +82,44 @@ def index():
 
     except Exception as e:
         return f"❌ DB 연결 실패: {e}"
+
+
+# 실시간 로그 조회용 API
+@app.route("/api/logs")
+def get_latest_logs():
+    try:
+        conn = pymysql.connect(
+            host="metro.proxy.rlwy.net",
+            port=39083,
+            user="root",
+            password="CXJqQqOlYTACMQZPdSaNyvUeLtnfHVvH",
+            database="railway",
+            charset="utf8mb4"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, message, created_at 
+            FROM wrist_log 
+            ORDER BY created_at DESC 
+            LIMIT 10
+        """)
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        logs = [{
+            "id": row[0],
+            "message": row[1],
+            "created_at": row[2].strftime("%Y-%m-%d %H:%M:%S"),
+            "status": "⚠️ 손목 꺾임 감지" if "1" in row[1] else "✅ 정상"
+        } for row in rows]
+
+        return jsonify({"logs": logs})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
