@@ -1,31 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <title>Wrist Log</title>
-    <style>
-        body { font-family: Arial; margin: 40px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { padding: 8px 12px; border: 1px solid #ddd; text-align: center; }
-        th { background-color: #f5f5f5; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>손목 꺾임 교정 시스템</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>📋 Wrist Log</h1>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>메시지</th>
-            <th>기록 시간</th>
-            <th>상태</th>
-        </tr>
-        {% for log in logs %}
-        <tr>
-            <td>{{ log.id }}</td>
-            <td>{{ log.message }}</td>
-            <td>{{ log.created_at }}</td>
-            <td>{{ log.status }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+<body class="bg-gray-100 text-gray-900 font-sans">
+    <div class="max-w-3xl mx-auto py-8 px-4">
+        <h1 class="text-3xl font-bold mb-6 text-center">손목 꺾임 교정 시스템</h1>
+
+        <!-- 최근 로그 -->
+        <div class="grid grid-cols-1 gap-4 mb-8">
+            {% for log in logs %}
+            <div class="bg-white p-4 shadow rounded-xl">
+                <p class="text-sm text-gray-500">{{ log.created_at }}</p>
+                <p class="text-lg font-medium">{{ log.message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 꺾임 시간대 분석 차트 -->
+        <div class="bg-white p-6 rounded-xl shadow">
+            <h2 class="text-xl font-semibold mb-4">시간대별 꺾임 빈도</h2>
+            <canvas id="wristChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('wristChart');
+        const wristChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ labels|safe }},  // 예: ['08시', '09시', ...]
+                datasets: [{
+                    label: '꺾임 횟수',
+                    data: {{ data|safe }},   // 예: [2, 5, 3, ...]
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
