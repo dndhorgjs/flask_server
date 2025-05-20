@@ -10,7 +10,20 @@
 <body class="bg-gray-100 text-gray-900 font-sans">
     <div class="max-w-3xl mx-auto py-8 px-4">
         <h1 class="text-3xl font-bold mb-6 text-center">손목 꺾임 교정 시스템</h1>
-
+        <div class="grid grid-cols-3 gap-4 mb-6">
+  <div class="bg-white shadow rounded-xl p-4 text-center">
+    <p class="text-sm text-gray-500">30일간 꺾임 총합</p>
+    <p class="text-2xl font-bold text-red-500">{{ total_bends }}</p>
+  </div>
+  <div class="bg-white shadow rounded-xl p-4 text-center">
+    <p class="text-sm text-gray-500">꺾임 발생 일수</p>
+    <p class="text-2xl font-bold text-blue-500">{{ bend_days }}</p>
+  </div>
+  <div class="bg-white shadow rounded-xl p-4 text-center">
+    <p class="text-sm text-gray-500">평균 일일 꺾임</p>
+    <p class="text-2xl font-bold text-green-500">{{ avg_bends }}</p>
+  </div>
+</div>
         <!-- 최근 로그 -->
         <div class="grid grid-cols-1 gap-4 mb-8">
             {% for log in logs %}
