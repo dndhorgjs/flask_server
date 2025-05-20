@@ -8,48 +8,71 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans">
-    <div class="max-w-3xl mx-auto py-8 px-4">
+    <div class="max-w-4xl mx-auto py-8 px-4">
         <h1 class="text-3xl font-bold mb-6 text-center">손목 꺾임 교정 시스템</h1>
+
+        <!-- 꺾임 통계 요약 카드 -->
         <div class="grid grid-cols-3 gap-4 mb-6">
-  <div class="bg-white shadow rounded-xl p-4 text-center">
-    <p class="text-sm text-gray-500">30일간 꺾임 총합</p>
-    <p class="text-2xl font-bold text-red-500">{{ total_bends }}</p>
-  </div>
-  <div class="bg-white shadow rounded-xl p-4 text-center">
-    <p class="text-sm text-gray-500">꺾임 발생 일수</p>
-    <p class="text-2xl font-bold text-blue-500">{{ bend_days }}</p>
-  </div>
-  <div class="bg-white shadow rounded-xl p-4 text-center">
-    <p class="text-sm text-gray-500">평균 일일 꺾임</p>
-    <p class="text-2xl font-bold text-green-500">{{ avg_bends }}</p>
-  </div>
-</div>
-        <!-- 최근 로그 -->
-        <div class="grid grid-cols-1 gap-4 mb-8">
-            {% for log in logs %}
-            <div class="bg-white p-4 shadow rounded-xl">
-                <p class="text-sm text-gray-500">{{ log.created_at }}</p>
-                <p class="text-lg font-medium">{{ log.message }}</p>
+            <div class="bg-white shadow rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-500">30일간 꺾임 총합</p>
+                <p class="text-2xl font-bold text-red-500">{{ total_bends }}</p>
             </div>
-            {% endfor %}
+            <div class="bg-white shadow rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-500">꺾임 발생 일수</p>
+                <p class="text-2xl font-bold text-blue-500">{{ bend_days }}</p>
+            </div>
+            <div class="bg-white shadow rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-500">평균 일일 꺾임</p>
+                <p class="text-2xl font-bold text-green-500">{{ avg_bends }}</p>
+            </div>
         </div>
 
-        <!-- 꺾임 시간대 분석 차트 -->
+        <!-- 실시간 로그 리스트 -->
+        <div id="logContainer" class="grid grid-cols-1 gap-4 mb-8">
+            <!-- JavaScript가 이곳을 실시간으로 업데이트함 -->
+        </div>
+
+        <!-- 시간대별 꺾임 빈도 차트 -->
         <div class="bg-white p-6 rounded-xl shadow">
-            <h2 class="text-xl font-semibold mb-4">시간대별 꺾임 빈도</h2>
+            <h2 class="text-xl font-semibold mb-4">최근 30일 날짜+시간대별 꺾임 빈도</h2>
             <canvas id="wristChart"></canvas>
         </div>
     </div>
 
     <script>
+        // 실시간 로그 갱신
+        async function fetchLogs() {
+            try {
+                const res = await fetch("/api/logs");
+                const data = await res.json();
+                const logContainer = document.getElementById("logContainer");
+                logContainer.innerHTML = "";
+                data.logs.forEach(log => {
+                    const div = document.createElement("div");
+                    div.className = "bg-white p-4 shadow rounded-xl mb-2";
+                    div.innerHTML = `
+                        <p class="text-sm text-gray-500">${log.created_at}</p>
+                        <p class="text-lg font-medium">${log.message}</p>
+                        <p class="text-sm">${log.status}</p>
+                    `;
+                    logContainer.appendChild(div);
+                });
+            } catch (err) {
+                console.error("로그 로딩 실패", err);
+            }
+        }
+        fetchLogs();
+        setInterval(fetchLogs, 5000);  // 5초마다 새로고침
+
+        // 차트 데이터 렌더링
         const ctx = document.getElementById('wristChart');
         const wristChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: {{ labels|safe }},  // 예: ['08시', '09시', ...]
+                labels: {{ labels|safe }},
                 datasets: [{
                     label: '꺾임 횟수',
-                    data: {{ data|safe }},   // 예: [2, 5, 3, ...]
+                    data: {{ data|safe }},
                     borderWidth: 1
                 }]
             },
